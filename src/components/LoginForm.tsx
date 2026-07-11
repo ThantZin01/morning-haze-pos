@@ -24,10 +24,6 @@ export function LoginForm({ hasError = false }: { hasError?: boolean }) {
         {hasError ? <p className="rounded-md bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 ring-1 ring-rose-100">Invalid username or password.</p> : null}
         <Button>Login</Button>
       </form>
-      <div className="mt-5 rounded-md bg-mist p-3 text-xs font-medium text-stone-700 ring-1 ring-emerald-100">
-        Default admin: admin / Admin@123<br />
-        Default cashier: cashier / Cashier@123
-      </div>
     </Card>
   );
 }
