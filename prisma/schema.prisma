@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Role {
+  roleId      Int      @id @default(autoincrement())
+  roleName    String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@map("Roles")
+}
+
+model User {
+  userId                 Int         @id @default(autoincrement())
+  roleId                 Int
+  fullName               String
+  username               String      @unique
+  email                  String      @unique
+  passwordHash           String
+  status                 String      @default("ACTIVE")
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  role                   Role        @relation(fields: [roleId], references: [roleId])
+  orders                 Order[]     @relation("CashierOrders")
+  createdCategories      Category[]  @relation("CategoryCreatedBy")
+  updatedCategories      Category[]  @relation("CategoryUpdatedBy")
+  createdMenuItems       MenuItem[]  @relation("MenuItemCreatedBy")
+  updatedMenuItems       MenuItem[]  @relation("MenuItemUpdatedBy")
+  lastUpdatedInventories Inventory[] @relation("InventoryUpdatedBy")
+
+  @@map("User")
+}
+
+model Order {
+  orderId     Int         @id @default(autoincrement())
+  cashierId   Int
+  orderDate   DateTime    @default(now())
+  totalAmount Decimal     @db.Decimal(12, 2)
+  orderStatus String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  cashier     User        @relation("CashierOrders", fields: [cashierId], references: [userId])
+  orderItems  OrderItem[]
+  payment     Payment?
+  receipt     Receipt?
+
+  @@map("Orders")
+}
+
+model OrderItem {
+  orderItemId Int      @id @default(autoincrement())
+  orderId     Int
+  menuItemId  Int
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  subTotal    Decimal  @db.Decimal(12, 2)
+  order       Order    @relation(fields: [orderId], references: [orderId])
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [menuItemId])
+
+  @@map("OrderItems")
+}
+
+model Payment {
+  paymentId     Int       @id @default(autoincrement())
+  orderId       Int       @unique
+  paymentMethod String
+  amountPaid    Decimal   @db.Decimal(12, 2)
+  changeAmount  Decimal   @db.Decimal(12, 2)
+  paymentStatus String
+  paymentDate   DateTime  @default(now())
+  order         Order     @relation(fields: [orderId], references: [orderId])
+  receipt       Receipt?
+
+  @@map("Payments")
+}
+
+model Receipt {
+  receiptId     Int      @id @default(autoincrement())
+  orderId       Int      @unique
+  paymentId     Int      @unique
+  receiptNumber String   @unique
+  receiptDate   DateTime @default(now())
+  totalAmount   Decimal  @db.Decimal(12, 2)
+  printedStatus Boolean  @default(false)
+  order         Order    @relation(fields: [orderId], references: [orderId])
+  payment       Payment  @relation(fields: [paymentId], references: [paymentId])
+
+  @@map("Receipts")
+}
+
+model Category {
+  categoryId       Int        @id @default(autoincrement())
+  createdByAdminId Int
+  updatedByAdminId Int
+  categoryName     String
+  description      String?
+  status           String     @default("ACTIVE")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  createdByAdmin   User       @relation("CategoryCreatedBy", fields: [createdByAdminId], references: [userId])
+  updatedByAdmin   User       @relation("CategoryUpdatedBy", fields: [updatedByAdminId], references: [userId])
+  menuItems        MenuItem[]
+
+  @@map("Categories")
+}
+
+model MenuItem {
+  menuItemId       Int         @id @default(autoincrement())
+  categoryId       Int
+  createdByAdminId Int
+  updatedByAdminId Int
+  itemName         String
+  description      String?
+  price            Decimal     @db.Decimal(12, 2)
+  imageUrl         String?
+  isAvailable      Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  category         Category    @relation(fields: [categoryId], references: [categoryId])
+  createdByAdmin   User        @relation("MenuItemCreatedBy", fields: [createdByAdminId], references: [userId])
+  updatedByAdmin   User        @relation("MenuItemUpdatedBy", fields: [updatedByAdminId], references: [userId])
+  orderItems       OrderItem[]
+  inventory        Inventory?
+
+  @@map("MenuItems")
+}
+
+model Inventory {
+  inventoryId          Int      @id @default(autoincrement())
+  menuItemId           Int      @unique
+  lastUpdatedByAdminId Int
+  stockQuantity        Int
+  reorderLevel         Int
+  unit                 String
+  lastUpdated          DateTime @updatedAt
+  menuItem             MenuItem @relation(fields: [menuItemId], references: [menuItemId])
+  lastUpdatedByAdmin   User     @relation("InventoryUpdatedBy", fields: [lastUpdatedByAdminId], references: [userId])
+
+  @@map("Inventory")
+}
