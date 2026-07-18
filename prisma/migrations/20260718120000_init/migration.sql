@@ -1,4 +1,4 @@
-﻿-- CreateSchema
+-- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateTable
@@ -187,4 +187,3 @@ ALTER TABLE "Inventory" ADD CONSTRAINT "Inventory_menuItemId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Inventory" ADD CONSTRAINT "Inventory_lastUpdatedByAdminId_fkey" FOREIGN KEY ("lastUpdatedByAdminId") REFERENCES "User"("userId") ON DELETE RESTRICT ON UPDATE CASCADE;
-
