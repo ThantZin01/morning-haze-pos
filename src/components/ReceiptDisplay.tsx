@@ -1,7 +1,6 @@
 "use client";
 
 import { CheckCircle2, Printer } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { markReceiptPrintedAction } from "@/lib/actions";
 import { dateTime, money } from "@/lib/format";
@@ -36,6 +35,17 @@ export function ReceiptDisplay({
   items: ReceiptItem[];
 }) {
   const router = useRouter();
+
+  const handleOpenPrintPage = () => {
+    if (typeof window === "undefined") return;
+
+    const printUrl = `/cashier/orders/print?receipt=${receiptId}`;
+    const opened = window.open(printUrl, "_blank", "noopener,noreferrer");
+
+    if (!opened) {
+      window.location.assign(printUrl);
+    }
+  };
 
   return (
     <div className="grid gap-4">
@@ -86,15 +96,14 @@ export function ReceiptDisplay({
       </div>
 
       <div className="no-print flex flex-wrap gap-2">
-        <Link
-          href={`/cashier/orders/print?receipt=${receiptId}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={handleOpenPrintPage}
           className="inline-flex items-center gap-2 rounded-md bg-coffee px-4 py-2 text-sm font-semibold text-white hover:bg-[#5f422f]"
         >
           <Printer size={16} />
           Print receipt
-        </Link>
+        </button>
 
         <form action={markReceiptPrintedAction} className="inline-flex">
           <input type="hidden" name="receiptId" value={receiptId} />
