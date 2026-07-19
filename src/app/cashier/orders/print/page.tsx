@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { Shell } from "@/components/ui";
 import { requireRole } from "@/lib/auth";
 import { money } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -22,8 +21,8 @@ export default async function PrintReceiptPage({ searchParams }: { searchParams:
   if (!receipt || receipt.order.cashierId !== cashier.userId) notFound();
 
   return (
-    <Shell role="CASHIER" title="Print receipt">
-      <div className="mx-auto max-w-xl rounded-2xl border border-stone-300 bg-white p-6 shadow-sm">
+    <div className="min-h-screen bg-white px-4 py-6 text-stone-800">
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-stone-300 bg-white p-6 shadow-sm">
         <div className="mb-6 text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-coffee">Morning Haze Cafe House</p>
           <h2 className="mt-2 text-2xl font-black">Receipt</h2>
@@ -59,6 +58,6 @@ export default async function PrintReceiptPage({ searchParams }: { searchParams:
           </a>
         </div>
       </div>
-    </Shell>
+    </div>
   );
 }

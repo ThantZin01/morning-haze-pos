@@ -38,13 +38,7 @@ export function ReceiptDisplay({
 
   const handleOpenPrintPage = () => {
     if (typeof window === "undefined") return;
-
-    const printUrl = `/cashier/orders/print?receipt=${receiptId}`;
-    const opened = window.open(printUrl, "_blank", "noopener,noreferrer");
-
-    if (!opened) {
-      window.location.assign(printUrl);
-    }
+    router.push(`/cashier/orders/print?receipt=${receiptId}`);
   };
 
   return (
