@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { login, logout, requireRole, requireUser } from "./auth";
 import { prisma } from "./prisma";
@@ -87,16 +88,47 @@ export async function saveUserAction(formData: FormData) {
   };
   userSchema.parse(data);
 
-  if (id) {
-    await prisma.user.update({ where: { userId: id }, data });
-  } else {
-    await prisma.user.create({
-      data: {
-        ...data,
-        passwordHash: await bcrypt.hash(value(formData, "password") || "Password@123", 12)
-      }
-    });
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ username: data.username }, { email: data.email }]
+    }
+  });
+
+  if (existingUser && existingUser.userId !== id) {
+    if (existingUser.username === data.username && existingUser.email === data.email) {
+      throw new Error("A user with this username and email already exists.");
+    }
+    if (existingUser.username === data.username) {
+      throw new Error("A user with this username already exists. Choose a different username.");
+    }
+    throw new Error("A user with this email already exists. Use a different email address.");
   }
+
+  try {
+    if (id) {
+      await prisma.user.update({ where: { userId: id }, data });
+    } else {
+      await prisma.user.create({
+        data: {
+          ...data,
+          passwordHash: await bcrypt.hash(value(formData, "password") || "Password@123", 12)
+        }
+      });
+    }
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const target = Array.isArray(error.meta?.target) ? error.meta.target.join(", ") : "";
+      if (target.includes("username")) {
+        throw new Error("A user with this username already exists. Choose a different username.");
+      }
+      if (target.includes("email")) {
+        throw new Error("A user with this email already exists. Use a different email address.");
+      }
+      throw new Error("A user with this username or email already exists.");
+    }
+    throw error;
+  }
+
   revalidatePath("/admin/users");
 }
 
