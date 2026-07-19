@@ -1,6 +1,5 @@
-import { Printer } from "lucide-react";
-import { Button, Card, Shell, StatusPill } from "@/components/ui";
-import { markReceiptPrintedAction } from "@/lib/actions";
+import { Card, Shell, StatusPill } from "@/components/ui";
+import { ReceiptDisplay } from "@/components/ReceiptDisplay";
 import { requireRole } from "@/lib/auth";
 import { dateTime, money, statusClass } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -46,36 +45,22 @@ export default async function CashierOrdersPage({ searchParams }: { searchParams
         <Card>
           <h2 className="mb-4 text-lg font-bold">Receipt</h2>
           {selected?.receipt && selected.payment ? (
-            <div className="grid gap-4">
-              <div className="rounded-md border border-dashed border-stone-300 p-4">
-                <div className="text-center">
-                  <p className="text-sm font-semibold uppercase text-coffee">Morning Haze Cafe House</p>
-                  <h3 className="text-xl font-bold">Receipt</h3>
-                  <p className="text-xs text-stone-500">{selected.receipt.receiptNumber}</p>
-                </div>
-                <div className="mt-4 grid gap-2 text-sm">
-                  {selected.orderItems.map((item) => (
-                    <p key={item.orderItemId} className="flex justify-between">
-                      <span>{item.quantity} x {item.menuItem.itemName}</span>
-                      <strong>{money(item.subTotal)}</strong>
-                    </p>
-                  ))}
-                </div>
-                <div className="mt-4 border-t pt-3 text-sm">
-                  <p className="flex justify-between"><span>Total</span><strong>{money(selected.totalAmount)}</strong></p>
-                  <p className="flex justify-between"><span>Payment</span><strong>{selected.payment.paymentMethod}</strong></p>
-                  <p className="flex justify-between"><span>Paid</span><strong>{money(selected.payment.amountPaid)}</strong></p>
-                  <p className="flex justify-between"><span>Change</span><strong>{money(selected.payment.changeAmount)}</strong></p>
-                </div>
-              </div>
-              <form action={markReceiptPrintedAction}>
-                <input type="hidden" name="receiptId" value={selected.receipt.receiptId} />
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-coffee px-4 py-2 text-sm font-semibold text-white hover:bg-[#5f422f]">
-                  <Printer size={16} />
-                  {selected.receipt.printedStatus ? "Receipt printed" : "Mark receipt as printed"}
-                </button>
-              </form>
-            </div>
+            <ReceiptDisplay
+              receiptId={selected.receipt.receiptId}
+              receiptNumber={selected.receipt.receiptNumber}
+              printedStatus={selected.receipt.printedStatus}
+              orderId={selected.orderId}
+              orderDate={selected.orderDate.toISOString()}
+              totalAmount={Number(selected.totalAmount)}
+              paymentMethod={selected.payment.paymentMethod}
+              amountPaid={Number(selected.payment.amountPaid)}
+              changeAmount={Number(selected.payment.changeAmount)}
+              items={selected.orderItems.map((item) => ({
+                label: item.menuItem.itemName,
+                quantity: item.quantity,
+                subTotal: Number(item.subTotal)
+              }))}
+            />
           ) : (
             <p className="text-sm text-stone-600">No receipt generated yet.</p>
           )}
