@@ -8,8 +8,17 @@ export type SessionUser = {
   roleName: "ADMIN" | "CASHIER";
 };
 
+type SessionPayload = SessionUser & { exp: number };
+
 function secret() {
-  return process.env.AUTH_SECRET || "dev-only-change-this-secret";
+  const authSecret = process.env.AUTH_SECRET;
+  if (!authSecret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("AUTH_SECRET must be set in production.");
+    }
+    return "dev-only-change-this-secret";
+  }
+  return authSecret;
 }
 
 function sign(value: string) {
@@ -17,7 +26,11 @@ function sign(value: string) {
 }
 
 export function createSessionToken(user: SessionUser) {
-  const payload = Buffer.from(JSON.stringify(user)).toString("base64url");
+  const payloadObject: SessionPayload = {
+    ...user,
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 8
+  };
+  const payload = Buffer.from(JSON.stringify(payloadObject)).toString("base64url");
   return `${payload}.${sign(payload)}`;
 }
 
@@ -27,7 +40,10 @@ export function verifySessionToken(token?: string): SessionUser | null {
   if (!payload || !signature || sign(payload) !== signature) return null;
 
   try {
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as SessionUser;
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as SessionPayload;
+    if (parsed.exp < Math.floor(Date.now() / 1000)) return null;
+    const { exp, ...user } = parsed;
+    return user;
   } catch {
     return null;
   }

@@ -9,7 +9,6 @@ export default async function MenuItemsPage() {
   const [categories, menuItems] = await Promise.all([
     prisma.category.findMany({ where: { status: "ACTIVE" }, orderBy: { categoryName: "asc" } }),
     prisma.menuItem.findMany({
-      where: { isAvailable: true },
       include: {
         category: true,
         inventory: true,

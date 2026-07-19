@@ -11,6 +11,32 @@ function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
+const userSchema = z.object({
+  fullName: z.string().min(1),
+  username: z.string().min(1),
+  email: z.string().email(),
+  roleId: z.number().int().positive(),
+  status: z.enum(["ACTIVE", "INACTIVE"])
+});
+
+const menuItemSchema = z.object({
+  categoryId: z.number().int().positive(),
+  itemName: z.string().min(1),
+  description: z.string().optional(),
+  price: z.number().nonnegative(),
+  imageUrl: z.string().optional(),
+  isAvailable: z.boolean(),
+  updatedByAdminId: z.number().int().positive()
+});
+
+const inventorySchema = z.object({
+  menuItemId: z.number().int().positive(),
+  stockQuantity: z.number().int().min(0),
+  reorderLevel: z.number().int().min(0),
+  unit: z.string().min(1),
+  lastUpdatedByAdminId: z.number().int().positive()
+});
+
 export async function loginAction(formData: FormData) {
   const result = await login(value(formData, "username"), value(formData, "password"));
   if (!result.ok) redirect("/login?error=1");
@@ -57,9 +83,9 @@ export async function saveUserAction(formData: FormData) {
     username: value(formData, "username"),
     email: value(formData, "email"),
     roleId: role.roleId,
-    status: value(formData, "status") || "ACTIVE"
+    status: (value(formData, "status") || "ACTIVE") as "ACTIVE" | "INACTIVE"
   };
-  z.object({ fullName: z.string().min(1), username: z.string().min(1), email: z.string().email() }).parse(data);
+  userSchema.parse(data);
 
   if (id) {
     await prisma.user.update({ where: { userId: id }, data });
@@ -156,6 +182,8 @@ export async function saveMenuItemAction(formData: FormData) {
     isAvailable: value(formData, "isAvailable") === "on",
     updatedByAdminId: admin.userId
   };
+  menuItemSchema.parse(data);
+
   if (id) {
     await prisma.menuItem.update({ where: { menuItemId: id }, data });
   } else {
@@ -208,21 +236,28 @@ export async function deleteMenuItemAction(formData: FormData) {
 
 export async function saveInventoryAction(formData: FormData) {
   const admin = await requireRole("ADMIN");
-  const stockQuantity = Number(value(formData, "stockQuantity"));
-  if (stockQuantity < 0) throw new Error("Stock quantity cannot be negative.");
+  const data = {
+    menuItemId: Number(value(formData, "menuItemId")),
+    stockQuantity: Number(value(formData, "stockQuantity")),
+    reorderLevel: Number(value(formData, "reorderLevel")),
+    unit: value(formData, "unit"),
+    lastUpdatedByAdminId: admin.userId
+  };
+  inventorySchema.parse(data);
+
   await prisma.inventory.upsert({
-    where: { menuItemId: Number(value(formData, "menuItemId")) },
+    where: { menuItemId: data.menuItemId },
     update: {
-      stockQuantity,
-      reorderLevel: Number(value(formData, "reorderLevel")),
-      unit: value(formData, "unit"),
+      stockQuantity: data.stockQuantity,
+      reorderLevel: data.reorderLevel,
+      unit: data.unit,
       lastUpdatedByAdminId: admin.userId
     },
     create: {
-      menuItemId: Number(value(formData, "menuItemId")),
-      stockQuantity,
-      reorderLevel: Number(value(formData, "reorderLevel")),
-      unit: value(formData, "unit"),
+      menuItemId: data.menuItemId,
+      stockQuantity: data.stockQuantity,
+      reorderLevel: data.reorderLevel,
+      unit: data.unit,
       lastUpdatedByAdminId: admin.userId
     }
   });
@@ -234,6 +269,10 @@ export async function createOrderAction(formData: FormData) {
   const itemIds = formData.getAll("menuItemId").map(Number);
   const quantities = formData.getAll("quantity").map((item) => Number(item));
   const paymentMethod = value(formData, "paymentMethod");
+
+  if (!["Cash", "Card", "Mobile Pay"].includes(paymentMethod)) {
+    throw new Error("Invalid payment method.");
+  }
 
   const requested = itemIds
     .map((menuItemId, index) => ({ menuItemId, quantity: quantities[index] || 0 }))
