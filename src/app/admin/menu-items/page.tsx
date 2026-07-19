@@ -23,7 +23,7 @@ export default async function MenuItemsPage() {
       <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
         <Card>
           <h2 className="mb-4 text-lg font-bold">Create menu item</h2>
-          <form action={saveMenuItemAction} className="grid gap-3" encType="multipart/form-data">
+          <form action={saveMenuItemAction} method="post" className="grid gap-3" encType="multipart/form-data">
             <Field label="Item name"><input name="itemName" required /></Field>
             <Field label="Category"><select name="categoryId">{categories.map((c) => <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>)}</select></Field>
             <Field label="Description"><textarea name="description" rows={3} /></Field>
@@ -31,7 +31,7 @@ export default async function MenuItemsPage() {
             <Field label="Image URL"><input name="imageUrl" /></Field>
             <Field label="Upload image"><input name="image" type="file" accept="image/*" /></Field>
             <label className="flex items-center gap-2 text-sm font-semibold"><input className="w-4" type="checkbox" name="isAvailable" defaultChecked /> Available</label>
-            <Button>Save item</Button>
+            <Button type="submit">Save item</Button>
           </form>
         </Card>
         <Card>
@@ -52,7 +52,7 @@ export default async function MenuItemsPage() {
                     </div>
                     <StatusPill className={statusClass(item.isAvailable ? "ACTIVE" : "INACTIVE")}>{item.isAvailable ? "Available" : "Unavailable"}</StatusPill>
                   </div>
-                  <form action={saveMenuItemAction} className="grid gap-3 xl:grid-cols-[1fr_160px_140px_1.5fr_120px_auto]" encType="multipart/form-data">
+                  <form action={saveMenuItemAction} method="post" className="grid gap-3 xl:grid-cols-[1fr_160px_140px_1.5fr_120px_auto]" encType="multipart/form-data">
                     <input type="hidden" name="menuItemId" value={item.menuItemId} />
                     <input name="itemName" defaultValue={item.itemName} required />
                     <select name="categoryId" defaultValue={item.categoryId}>
@@ -70,7 +70,7 @@ export default async function MenuItemsPage() {
                       <input className="w-4" type="checkbox" name="isAvailable" defaultChecked={item.isAvailable} />
                       Available
                     </label>
-                    <Button>Update</Button>
+                    <Button type="submit">Update</Button>
                   </form>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm text-stone-600">

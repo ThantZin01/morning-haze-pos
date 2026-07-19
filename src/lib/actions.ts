@@ -46,6 +46,12 @@ async function getUploadedImageUrl(formData: FormData) {
   return imageUrl || undefined;
 }
 
+async function repairMenuItemSequence() {
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"MenuItems"', 'menuItemId'), COALESCE((SELECT MAX("menuItemId") FROM "MenuItems"), 0) + 1, false)`
+  );
+}
+
 const userSchema = z.object({
   fullName: z.string().min(1),
   username: z.string().min(1),
@@ -239,13 +245,23 @@ export async function saveCategoryAction(formData: FormData) {
 export async function saveMenuItemAction(formData: FormData) {
   const admin = await requireRole("ADMIN");
   const id = Number(value(formData, "menuItemId") || 0);
-  const imageUrl = await getUploadedImageUrl(formData);
+  const rawImageUrl = value(formData, "imageUrl");
+
+  let imageUrl = await getUploadedImageUrl(formData);
+  let existingItem = null;
+  if (id) {
+    existingItem = await prisma.menuItem.findUnique({ where: { menuItemId: id } });
+    if (existingItem && !imageUrl && rawImageUrl === "") {
+      imageUrl = existingItem.imageUrl ?? undefined;
+    }
+  }
+
   const data = {
     categoryId: Number(value(formData, "categoryId")),
     itemName: value(formData, "itemName"),
     description: value(formData, "description"),
     price: Number(value(formData, "price")),
-    imageUrl,
+    imageUrl: imageUrl || rawImageUrl || undefined,
     isAvailable: value(formData, "isAvailable") === "on",
     updatedByAdminId: admin.userId
   };
@@ -254,7 +270,16 @@ export async function saveMenuItemAction(formData: FormData) {
   if (id) {
     await prisma.menuItem.update({ where: { menuItemId: id }, data });
   } else {
-    await prisma.menuItem.create({ data: { ...data, createdByAdminId: admin.userId } });
+    try {
+      await prisma.menuItem.create({ data: { ...data, createdByAdminId: admin.userId } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" && Array.isArray(error.meta?.target) && error.meta.target.includes("menuItemId")) {
+        await repairMenuItemSequence();
+        await prisma.menuItem.create({ data: { ...data, createdByAdminId: admin.userId } });
+      } else {
+        throw error;
+      }
+    }
   }
   revalidatePath("/admin/menu-items");
   revalidatePath("/cashier");
@@ -312,22 +337,29 @@ export async function saveInventoryAction(formData: FormData) {
   };
   inventorySchema.parse(data);
 
-  await prisma.inventory.upsert({
-    where: { menuItemId: data.menuItemId },
-    update: {
-      stockQuantity: data.stockQuantity,
-      reorderLevel: data.reorderLevel,
-      unit: data.unit,
-      lastUpdatedByAdminId: admin.userId
-    },
-    create: {
-      menuItemId: data.menuItemId,
-      stockQuantity: data.stockQuantity,
-      reorderLevel: data.reorderLevel,
-      unit: data.unit,
-      lastUpdatedByAdminId: admin.userId
-    }
-  });
+  const existingInventory = await prisma.inventory.findUnique({ where: { menuItemId: data.menuItemId } });
+
+  if (existingInventory) {
+    await prisma.inventory.update({
+      where: { menuItemId: data.menuItemId },
+      data: {
+        stockQuantity: { increment: data.stockQuantity },
+        reorderLevel: data.reorderLevel,
+        unit: data.unit,
+        lastUpdatedByAdminId: admin.userId
+      }
+    });
+  } else {
+    await prisma.inventory.create({
+      data: {
+        menuItemId: data.menuItemId,
+        stockQuantity: data.stockQuantity,
+        reorderLevel: data.reorderLevel,
+        unit: data.unit,
+        lastUpdatedByAdminId: admin.userId
+      }
+    });
+  }
   revalidatePath("/admin/inventory");
 }
 
