@@ -4,12 +4,46 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
+import { put } from "@vercel/blob";
 import { z } from "zod";
 import { login, logout, requireRole, requireUser } from "./auth";
 import { prisma } from "./prisma";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
+}
+
+async function uploadImageToBlob(formData: FormData) {
+  const image = formData.get("image");
+  if (!(image instanceof File) || image.size === 0) {
+    return undefined;
+  }
+
+  const storeId = process.env.BLOB_STORE_ID;
+  if (!storeId) {
+    throw new Error("Vercel Blob store ID is not configured. Set BLOB_STORE_ID in your environment.");
+  }
+
+  const safeName = image.name
+    ? image.name.replace(/[^a-zA-Z0-9_.-]/g, "-").replace(/^-+|-+$/g, "")
+    : "menu-image.jpg";
+  const fileName = `menu-items/${Date.now()}-${safeName}`;
+  const blob = await put(fileName, image, {
+    access: "public",
+    storeId,
+    addRandomSuffix: true,
+    contentType: image.type || undefined
+  });
+  return blob.url;
+}
+
+async function getUploadedImageUrl(formData: FormData) {
+  const blobUrl = await uploadImageToBlob(formData);
+  if (blobUrl) {
+    return blobUrl;
+  }
+  const imageUrl = value(formData, "imageUrl");
+  return imageUrl || undefined;
 }
 
 const userSchema = z.object({
@@ -205,12 +239,13 @@ export async function saveCategoryAction(formData: FormData) {
 export async function saveMenuItemAction(formData: FormData) {
   const admin = await requireRole("ADMIN");
   const id = Number(value(formData, "menuItemId") || 0);
+  const imageUrl = await getUploadedImageUrl(formData);
   const data = {
     categoryId: Number(value(formData, "categoryId")),
     itemName: value(formData, "itemName"),
     description: value(formData, "description"),
     price: Number(value(formData, "price")),
-    imageUrl: value(formData, "imageUrl"),
+    imageUrl,
     isAvailable: value(formData, "isAvailable") === "on",
     updatedByAdminId: admin.userId
   };

@@ -13,6 +13,7 @@ type MenuItem = {
   price: string | number;
   categoryName: string;
   stockQuantity: number | null;
+  imageUrl?: string | null;
 };
 
 export function CashierOrderForm({ menuItems }: { menuItems: MenuItem[] }) {
@@ -59,6 +60,11 @@ export function CashierOrderForm({ menuItems }: { menuItems: MenuItem[] }) {
 
             return (
               <div key={item.menuItemId} className={`grid gap-3 rounded-lg border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${quantity > 0 ? "border-coffee bg-mist/70 shadow-emerald-100" : "border-stone-200 bg-white"}`}>
+                {item.imageUrl ? (
+                  <div className="relative h-32 overflow-hidden rounded-xl bg-stone-100">
+                    <img src={item.imageUrl} alt={item.itemName} className="h-full w-full object-cover" />
+                  </div>
+                ) : null}
                 <div>
                   <p className="inline-flex rounded-full bg-stone-100 px-2 py-1 text-xs font-semibold uppercase text-coffee">{item.categoryName}</p>
                   <h3 className="text-base font-bold">{item.itemName}</h3>

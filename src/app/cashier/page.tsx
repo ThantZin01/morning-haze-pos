@@ -20,7 +20,8 @@ export default async function CashierPage() {
           description: item.description,
           price: item.price.toString(),
           categoryName: item.category.categoryName,
-          stockQuantity: item.inventory?.stockQuantity ?? null
+          stockQuantity: item.inventory?.stockQuantity ?? null,
+          imageUrl: item.imageUrl || null
         }))}
       />
     </Shell>
