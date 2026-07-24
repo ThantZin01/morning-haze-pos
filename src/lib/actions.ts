@@ -46,9 +46,9 @@ async function getUploadedImageUrl(formData: FormData) {
   return imageUrl || undefined;
 }
 
-async function repairMenuItemSequence() {
+async function repairSerialSequence(tableName: string, primaryKeyColumn: string) {
   await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('"MenuItems"', 'menuItemId'), COALESCE((SELECT MAX("menuItemId") FROM "MenuItems"), 0) + 1, false)`
+    `SELECT setval(pg_get_serial_sequence('${tableName}', '${primaryKeyColumn}'), COALESCE((SELECT MAX("${primaryKeyColumn}") FROM "${tableName}"), 0) + 1, false)`
   );
 }
 
@@ -234,11 +234,27 @@ export async function saveCategoryAction(formData: FormData) {
     status: value(formData, "status") || "ACTIVE",
     updatedByAdminId: admin.userId
   };
+
   if (id) {
     await prisma.category.update({ where: { categoryId: id }, data });
   } else {
-    await prisma.category.create({ data: { ...data, createdByAdminId: admin.userId } });
+    try {
+      await prisma.category.create({ data: { ...data, createdByAdminId: admin.userId } });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("categoryId")
+      ) {
+        await repairSerialSequence("Categories", "categoryId");
+        await prisma.category.create({ data: { ...data, createdByAdminId: admin.userId } });
+      } else {
+        throw error;
+      }
+    }
   }
+
   revalidatePath("/admin/categories");
 }
 
@@ -273,8 +289,13 @@ export async function saveMenuItemAction(formData: FormData) {
     try {
       await prisma.menuItem.create({ data: { ...data, createdByAdminId: admin.userId } });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002" && Array.isArray(error.meta?.target) && error.meta.target.includes("menuItemId")) {
-        await repairMenuItemSequence();
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("menuItemId")
+      ) {
+        await repairSerialSequence("MenuItems", "menuItemId");
         await prisma.menuItem.create({ data: { ...data, createdByAdminId: admin.userId } });
       } else {
         throw error;
