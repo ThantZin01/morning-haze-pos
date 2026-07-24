@@ -23,7 +23,11 @@ const env = fs.readFileSync('.env', 'utf8')
   });
 
   await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('"Categories"', 'categoryId'), COALESCE((SELECT MAX("categoryId") FROM "Categories"), 0) + 1, false)`
+    `SELECT setval(
+      pg_get_serial_sequence('public."Categories"', 'categoryId'),
+      COALESCE((SELECT MAX("categoryId") FROM "Categories"), 0) + 1,
+      false
+    )`
   );
 
   console.log('sequence repaired');

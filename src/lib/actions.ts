@@ -47,8 +47,17 @@ async function getUploadedImageUrl(formData: FormData) {
 }
 
 async function repairSerialSequence(tableName: string, primaryKeyColumn: string) {
+  const escapedTableName = tableName.replace(/"/g, '""');
+  const escapedPrimaryKeyColumn = primaryKeyColumn.replace(/"/g, '""');
+  const qualifiedTableName = `public."${escapedTableName}"`;
+  const quotedPrimaryKeyColumn = `"${escapedPrimaryKeyColumn}"`;
+
   await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('${tableName}', '${primaryKeyColumn}'), COALESCE((SELECT MAX("${primaryKeyColumn}") FROM "${tableName}"), 0) + 1, false)`
+    `SELECT setval(
+      pg_get_serial_sequence('${qualifiedTableName}', '${escapedPrimaryKeyColumn}'),
+      COALESCE((SELECT MAX(${quotedPrimaryKeyColumn}) FROM ${qualifiedTableName}), 0) + 1,
+      false
+    )`
   );
 }
 
