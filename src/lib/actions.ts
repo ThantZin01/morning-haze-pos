@@ -108,6 +108,7 @@ export async function updateProfileAction(formData: FormData) {
     }
   });
   revalidatePath("/profile");
+  redirect("/profile?success=Profile+updated+successfully");
 }
 
 export async function changePasswordAction(formData: FormData) {
@@ -122,6 +123,7 @@ export async function changePasswordAction(formData: FormData) {
     where: { userId: user.userId },
     data: { passwordHash: await bcrypt.hash(newPassword, 12) }
   });
+  redirect("/profile?success=Password+changed+successfully");
 }
 
 export async function saveUserAction(formData: FormData) {
@@ -179,15 +181,17 @@ export async function saveUserAction(formData: FormData) {
   }
 
   revalidatePath("/admin/users");
+  redirect("/admin/users?success=" + encodeURIComponent(id ? "User updated successfully" : "User created successfully"));
 }
 
 export async function toggleUserAction(formData: FormData) {
   await requireRole("ADMIN");
-  await prisma.user.update({
+  const targetUser = await prisma.user.update({
     where: { userId: Number(value(formData, "userId")) },
     data: { status: value(formData, "status") === "ACTIVE" ? "INACTIVE" : "ACTIVE" }
   });
   revalidatePath("/admin/users");
+  redirect("/admin/users?success=" + encodeURIComponent(`${targetUser.fullName} has been ${targetUser.status === "ACTIVE" ? "activated" : "deactivated"}`));
 }
 
 export async function deleteUserAction(formData: FormData) {
@@ -232,6 +236,7 @@ export async function deleteUserAction(formData: FormData) {
 
   await prisma.user.delete({ where: { userId } });
   revalidatePath("/admin/users");
+  redirect("/admin/users?success=User+account+deleted+successfully");
 }
 
 export async function saveCategoryAction(formData: FormData) {
@@ -265,6 +270,7 @@ export async function saveCategoryAction(formData: FormData) {
   }
 
   revalidatePath("/admin/categories");
+  redirect("/admin/categories?success=" + encodeURIComponent(id ? "Category updated successfully" : "Category created successfully"));
 }
 
 export async function saveMenuItemAction(formData: FormData) {
@@ -313,6 +319,7 @@ export async function saveMenuItemAction(formData: FormData) {
   }
   revalidatePath("/admin/menu-items");
   revalidatePath("/cashier");
+  redirect("/admin/menu-items?success=" + encodeURIComponent(id ? "Menu item updated successfully" : "Menu item created successfully"));
 }
 
 export async function deleteMenuItemAction(formData: FormData) {
@@ -354,6 +361,7 @@ export async function deleteMenuItemAction(formData: FormData) {
   revalidatePath("/admin/menu-items");
   revalidatePath("/admin/inventory");
   revalidatePath("/cashier");
+  redirect("/admin/menu-items?success=Menu+item+deleted+successfully");
 }
 
 export async function saveInventoryAction(formData: FormData) {
@@ -391,6 +399,7 @@ export async function saveInventoryAction(formData: FormData) {
     });
   }
   revalidatePath("/admin/inventory");
+  redirect("/admin/inventory?success=Inventory+updated+successfully");
 }
 
 export async function createOrderAction(formData: FormData) {
