@@ -273,6 +273,32 @@ export async function saveCategoryAction(formData: FormData) {
   redirect("/admin/categories?success=" + encodeURIComponent(id ? "Category updated successfully" : "Category created successfully"));
 }
 
+export async function deleteCategoryAction(formData: FormData) {
+  await requireRole("ADMIN");
+  const categoryId = Number(value(formData, "categoryId"));
+
+  const category = await prisma.category.findUnique({
+    where: { categoryId },
+    include: {
+      _count: {
+        select: { menuItems: true }
+      }
+    }
+  });
+
+  if (!category) {
+    throw new Error("Category not found.");
+  }
+
+  if (category._count.menuItems > 0) {
+    throw new Error("Cannot delete category because it contains menu items. Please remove or reassign the menu items first.");
+  }
+
+  await prisma.category.delete({ where: { categoryId } });
+  revalidatePath("/admin/categories");
+  redirect("/admin/categories?success=Category+deleted+successfully");
+}
+
 export async function saveMenuItemAction(formData: FormData) {
   const admin = await requireRole("ADMIN");
   const id = Number(value(formData, "menuItemId") || 0);
