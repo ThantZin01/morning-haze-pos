@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { loginAction } from "@/lib/actions";
 import { Button, Card, Field } from "./ui";
@@ -8,15 +8,11 @@ import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (formRef.current) {
-        formRef.current.requestSubmit();
-      }
-    }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    await loginAction(formData);
   };
 
   return (
@@ -30,13 +26,12 @@ export function LoginForm() {
           <p className="text-sm font-medium text-stone-600">Web-Based Cafe System</p>
         </div>
       </div>
-      <form ref={formRef} action={loginAction} className="grid gap-4">
+      <form onSubmit={handleSubmit} className="grid gap-4">
         <Field label="Username or email">
           <input 
             name="username" 
             required 
             autoComplete="username" 
-            onKeyDown={handleKeyDown}
           />
         </Field>
         <Field label="Password">
@@ -47,7 +42,6 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"} 
               autoComplete="current-password" 
               className="!pr-10"
-              onKeyDown={handleKeyDown}
             />
             <button
               type="button"
