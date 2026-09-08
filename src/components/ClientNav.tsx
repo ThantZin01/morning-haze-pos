@@ -2,10 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type LucideIcon } from "lucide-react";
+import { BarChart3, Boxes, Coffee, History, LayoutDashboard, ListTree, ReceiptText, Settings, ShoppingCart, UserRoundCog, Users, type LucideIcon } from "lucide-react";
 
-export function ClientNav({ nav }: { nav: Array<[string, string, LucideIcon]> }) {
+export function ClientNav({ role }: { role: "ADMIN" | "CASHIER" }) {
   const pathname = usePathname();
+
+  const nav: Array<[string, string, LucideIcon]> =
+    role === "ADMIN"
+      ? [
+          ["Dashboard", "/admin", LayoutDashboard],
+          ["Users", "/admin/users", Users],
+          ["Categories", "/admin/categories", ListTree],
+          ["Menu Items", "/admin/menu-items", Coffee],
+          ["Inventory", "/admin/inventory", Boxes],
+          ["Reports", "/admin/reports", BarChart3],
+          ["History", "/admin/history", History],
+          ["Profile", "/profile", Settings]
+        ]
+      : [
+          ["POS", "/cashier", ShoppingCart],
+          ["Orders", "/cashier/orders", ReceiptText],
+          ["Profile", "/profile", UserRoundCog]
+        ];
 
   return (
     <nav className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3">

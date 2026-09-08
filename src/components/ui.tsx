@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { BarChart3, Boxes, Coffee, History, LayoutDashboard, ListTree, LogOut, ReceiptText, Settings, ShoppingCart, UserRoundCog, Users, type LucideIcon } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { logoutAction } from "@/lib/actions";
 import { ClientNav } from "./ClientNav";
 
@@ -58,24 +58,6 @@ export function Shell({
   title: string;
   children: React.ReactNode;
 }) {
-  const nav: Array<[string, string, LucideIcon]> =
-    role === "ADMIN"
-      ? [
-          ["Dashboard", "/admin", LayoutDashboard],
-          ["Users", "/admin/users", Users],
-          ["Categories", "/admin/categories", ListTree],
-          ["Menu Items", "/admin/menu-items", Coffee],
-          ["Inventory", "/admin/inventory", Boxes],
-          ["Reports", "/admin/reports", BarChart3],
-          ["History", "/admin/history", History],
-          ["Profile", "/profile", Settings]
-        ]
-      : [
-          ["POS", "/cashier", ShoppingCart],
-          ["Orders", "/cashier/orders", ReceiptText],
-          ["Profile", "/profile", UserRoundCog]
-        ];
-
   return (
     <div className="min-h-screen">
       <header className="border-b border-stone-200/80 bg-white/90 shadow-sm shadow-stone-200/60 backdrop-blur">
@@ -96,7 +78,7 @@ export function Shell({
             </button>
           </form>
         </div>
-        <ClientNav nav={nav} />
+        <ClientNav role={role} />
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>
