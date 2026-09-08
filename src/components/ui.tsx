@@ -3,20 +3,20 @@ import Image from "next/image";
 import { BarChart3, Boxes, Coffee, History, LayoutDashboard, ListTree, LogOut, ReceiptText, Settings, ShoppingCart, UserRoundCog, Users, type LucideIcon } from "lucide-react";
 import { logoutAction } from "@/lib/actions";
 
-export function Button({ children, variant = "primary", type = "submit" }: { children: React.ReactNode; variant?: "primary" | "secondary" | "danger"; type?: "button" | "submit" | "reset" }) {
+export function Button({ children, variant = "primary", className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) {
   const styles = {
     primary: "bg-coffee text-white shadow-sm hover:bg-[#5f422f]",
     secondary: "bg-white text-ink ring-1 ring-stone-300 hover:bg-stone-50",
     danger: "bg-rose-600 text-white shadow-sm hover:bg-rose-700"
   };
   return (
-    <button type={type} className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold ${styles[variant]}`}>
+    <button className={`inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-70 ${styles[variant]} ${className}`} {...props}>
       {children}
     </button>
   );
 }
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function Card({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
   return <div className={`rounded-lg border border-stone-200/80 bg-white/95 p-5 shadow-sm shadow-stone-200/70 ${className}`}>{children}</div>;
 }
 
