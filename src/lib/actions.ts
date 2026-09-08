@@ -89,7 +89,7 @@ const inventorySchema = z.object({
 
 export async function loginAction(formData: FormData) {
   const result = await login(value(formData, "username"), value(formData, "password"));
-  if (!result.ok) redirect("/login?error=1");
+  if (!result.ok) redirect("/login?error=Invalid+username+or+password");
   redirect(result.roleName === "ADMIN" ? "/admin" : "/cashier");
 }
 
