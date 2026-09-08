@@ -26,11 +26,8 @@ export default async function InventoryPage() {
 
   return (
     <Shell role="ADMIN" title="Inventory management">
-      <div className="mb-5">
-        <ProgressChartCard title="Stock level chart" subtitle="Lowest stock items are shown first for quick reorder decisions." data={inventoryChart} />
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-        <Card>
+      <div className="mb-5 grid gap-5 lg:grid-cols-[360px_1fr]">
+        <Card className="h-fit">
           <h2 className="mb-4 text-lg font-bold">Update stock</h2>
           <form action={saveInventoryAction} className="grid gap-3">
             <Field label="Menu item"><select name="menuItemId">{menuItems.map((item) => <option key={item.menuItemId} value={item.menuItemId}>{item.itemName}</option>)}</select></Field>
@@ -65,6 +62,10 @@ export default async function InventoryPage() {
             </table>
           </div>
         </Card>
+      </div>
+      
+      <div>
+        <ProgressChartCard title="Stock level chart" subtitle="Lowest stock items are shown first for quick reorder decisions." data={inventoryChart} />
       </div>
     </Shell>
   );

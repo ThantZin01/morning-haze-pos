@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BarChart3, Boxes, Coffee, History, LayoutDashboard, ListTree, LogOut, ReceiptText, Settings, ShoppingCart, UserRoundCog, Users, type LucideIcon } from "lucide-react";
 import { logoutAction } from "@/lib/actions";
+import { ClientNav } from "./ClientNav";
 
 export function Button({ children, variant = "primary", className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "secondary" | "danger" }) {
   const styles = {
@@ -95,14 +96,7 @@ export function Shell({
             </button>
           </form>
         </div>
-        <nav className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3">
-          {nav.map(([label, href, Icon]) => (
-            <Link key={href} href={href} className="inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-mist hover:text-ink">
-              <Icon size={16} />
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <ClientNav nav={nav} />
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>
