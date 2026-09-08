@@ -8,12 +8,14 @@ import { Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      submitButtonRef.current?.click();
+      if (formRef.current) {
+        formRef.current.requestSubmit();
+      }
     }
   };
 
@@ -28,7 +30,7 @@ export function LoginForm() {
           <p className="text-sm font-medium text-stone-600">Web-Based Cafe System</p>
         </div>
       </div>
-      <form action={loginAction} className="grid gap-4">
+      <form ref={formRef} action={loginAction} className="grid gap-4">
         <Field label="Username or email">
           <input 
             name="username" 
@@ -58,7 +60,6 @@ export function LoginForm() {
             </button>
           </div>
         </Field>
-        <button type="submit" ref={submitButtonRef} className="hidden" aria-hidden="true" />
         <Button>Login</Button>
       </form>
     </Card>
