@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, StatusPill } from "@/components/ui";
+import { Button, StatusPill, Field, Card } from "@/components/ui";
 import { saveCategoryAction, deleteCategoryAction } from "@/lib/actions";
 import { statusClass } from "@/lib/format";
 import { Pencil, Trash2, X } from "lucide-react";
@@ -16,57 +16,12 @@ type Category = {
 export function CategoryManager({ categories }: { categories: Category[] }) {
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  return (
-    <div className="grid gap-3">
-      {categories.map((category) => {
-        if (editingId === category.categoryId) {
-          return (
-            <div key={category.categoryId} className="rounded-lg border border-stone-200 bg-stone-50 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="font-bold text-stone-800">Edit Category</h3>
-                <button
-                  type="button"
-                  onClick={() => setEditingId(null)}
-                  className="rounded-md p-1 text-stone-500 hover:bg-stone-200 hover:text-stone-800"
-                  title="Cancel editing"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              <form
-                action={(formData) => {
-                  saveCategoryAction(formData);
-                  setEditingId(null);
-                }}
-                className="grid gap-3 md:grid-cols-[1fr_1.5fr_120px_auto]"
-              >
-                <input type="hidden" name="categoryId" value={category.categoryId} />
-                <input
-                  name="categoryName"
-                  defaultValue={category.categoryName}
-                  required
-                  className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm outline-none focus:border-coffee focus:ring-1 focus:ring-coffee"
-                />
-                <input
-                  name="description"
-                  defaultValue={category.description || ""}
-                  className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm outline-none focus:border-coffee focus:ring-1 focus:ring-coffee"
-                />
-                <select
-                  name="status"
-                  defaultValue={category.status}
-                  className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm outline-none focus:border-coffee focus:ring-1 focus:ring-coffee"
-                >
-                  <option>ACTIVE</option>
-                  <option>INACTIVE</option>
-                </select>
-                <Button type="submit">Update</Button>
-              </form>
-            </div>
-          );
-        }
+  const editingCategory = categories.find((c) => c.categoryId === editingId);
 
-        return (
+  return (
+    <>
+      <div className="grid gap-3">
+        {categories.map((category) => (
           <div key={category.categoryId} className="flex flex-col gap-3 rounded-lg border border-stone-200 p-4 transition hover:border-stone-300 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-3">
@@ -105,13 +60,66 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
               </form>
             </div>
           </div>
-        );
-      })}
-      {categories.length === 0 && (
-        <div className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-500">
-          No categories found. Create one to get started.
+        ))}
+        {categories.length === 0 && (
+          <div className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-500">
+            No categories found. Create one to get started.
+          </div>
+        )}
+      </div>
+
+      {editingCategory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-md animate-in fade-in zoom-in-95">
+            <div className="mb-5 flex items-center justify-between border-b border-stone-100 pb-3">
+              <h3 className="text-lg font-bold text-stone-800">Edit Category</h3>
+              <button
+                type="button"
+                onClick={() => setEditingId(null)}
+                className="rounded-md p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                title="Cancel editing"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form
+              action={(formData) => {
+                saveCategoryAction(formData);
+                setEditingId(null);
+              }}
+              className="grid gap-4"
+            >
+              <input type="hidden" name="categoryId" value={editingCategory.categoryId} />
+              <Field label="Category name">
+                <input
+                  name="categoryName"
+                  defaultValue={editingCategory.categoryName}
+                  required
+                />
+              </Field>
+              <Field label="Description">
+                <textarea
+                  name="description"
+                  defaultValue={editingCategory.description || ""}
+                  rows={3}
+                />
+              </Field>
+              <Field label="Status">
+                <select name="status" defaultValue={editingCategory.status}>
+                  <option>ACTIVE</option>
+                  <option>INACTIVE</option>
+                </select>
+              </Field>
+              <div className="mt-2 flex justify-end gap-3">
+                <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Save changes</Button>
+              </div>
+            </form>
+          </Card>
         </div>
       )}
-    </div>
+    </>
   );
 }

@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import { loginAction } from "@/lib/actions";
 import { Button, Card, Field } from "./ui";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    await loginAction(formData);
+    startTransition(async () => {
+      await loginAction(formData);
+    });
   };
 
   return (
@@ -32,6 +35,7 @@ export function LoginForm() {
             name="username" 
             required 
             autoComplete="username" 
+            disabled={isPending}
           />
         </Field>
         <Field label="Password">
@@ -42,6 +46,7 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"} 
               autoComplete="current-password" 
               className="!pr-10"
+              disabled={isPending}
             />
             <button
               type="button"
@@ -49,12 +54,22 @@ export function LoginForm() {
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
               title={showPassword ? "Hide password" : "Show password"}
+              disabled={isPending}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
         </Field>
-        <Button>Login</Button>
+        <Button disabled={isPending} className="flex items-center justify-center gap-2">
+          {isPending ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Logging in...
+            </>
+          ) : (
+            "Login"
+          )}
+        </Button>
       </form>
     </Card>
   );
