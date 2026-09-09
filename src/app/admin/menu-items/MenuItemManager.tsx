@@ -32,81 +32,89 @@ export function MenuItemManager({ menuItems, categories }: { menuItems: MenuItem
 
   return (
     <>
-      <div className="grid gap-4">
-        {menuItems.map((item) => {
-          const stockQuantity = item.inventory?.stockQuantity ?? 0;
-          const canRemove = stockQuantity === 0;
-
-          return (
-            <div key={item.menuItemId} className="flex flex-col gap-4 rounded-lg border border-stone-200 p-4 transition hover:border-stone-300 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex gap-4">
-                {item.imageUrl ? (
-                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-stone-100 ring-1 ring-stone-200">
-                    <Image src={item.imageUrl} alt={item.itemName} fill className="object-cover" sizes="64px" />
-                  </div>
-                ) : (
-                  <div className="h-16 w-16 shrink-0 rounded-md bg-stone-100 ring-1 ring-stone-200" />
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-stone-800">{item.itemName}</h3>
+      <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b bg-stone-50 text-stone-600">
+            <tr>
+              <th className="p-4 font-semibold">Item</th>
+              <th className="p-4 font-semibold">Category</th>
+              <th className="p-4 font-semibold">Price</th>
+              <th className="p-4 font-semibold">Stock</th>
+              <th className="p-4 font-semibold">Sold</th>
+              <th className="p-4 font-semibold">Status</th>
+              <th className="p-4 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-200">
+            {menuItems.map((item) => {
+              const stockQuantity = item.inventory?.stockQuantity ?? 0;
+              const canRemove = stockQuantity === 0;
+              return (
+                <tr key={item.menuItemId} className="transition hover:bg-stone-50">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      {item.imageUrl ? (
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded bg-stone-100 ring-1 ring-stone-200">
+                          <Image src={item.imageUrl} alt={item.itemName} fill className="object-cover" sizes="40px" />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 shrink-0 rounded bg-stone-100 ring-1 ring-stone-200" />
+                      )}
+                      <div>
+                        <div className="font-bold text-stone-800">{item.itemName}</div>
+                        {item.description && <div className="text-xs text-stone-500 line-clamp-1">{item.description}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4 text-stone-700">{item.category.categoryName}</td>
+                  <td className="p-4 font-medium text-stone-700">{money(item.price)}</td>
+                  <td className="p-4 text-stone-700">{stockQuantity}</td>
+                  <td className="p-4 text-stone-700">{item._count.orderItems}</td>
+                  <td className="p-4">
                     <StatusPill className={statusClass(item.isAvailable ? "ACTIVE" : "INACTIVE")}>
                       {item.isAvailable ? "Available" : "Unavailable"}
                     </StatusPill>
-                  </div>
-                  <p className="mt-1 text-sm font-medium text-stone-700">{money(item.price)}</p>
-                  {item.description && <p className="mt-1 text-sm text-stone-500">{item.description}</p>}
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
-                    <p>Category: <span className="font-medium text-stone-700">{item.category.categoryName}</span></p>
-                    <p>Stock: <span className="font-medium text-stone-700">{stockQuantity}</span></p>
-                    <p>Sold: <span className="font-medium text-stone-700">{item._count.orderItems}</span></p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-2 sm:items-end">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingId(item.menuItemId)}
-                    className="inline-flex h-9 items-center justify-center rounded-md border border-stone-200 bg-white px-3 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-coffee/20"
-                    title="Edit menu item"
-                  >
-                    <Pencil size={16} className="mr-2" />
-                    Edit
-                  </button>
-                  <form action={deleteMenuItemAction}>
-                    <input type="hidden" name="menuItemId" value={item.menuItemId} />
-                    <button
-                      type="submit"
-                      className="inline-flex h-9 items-center justify-center rounded-md bg-rose-50 px-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!canRemove}
-                      title={canRemove ? "Apply delete/deactivate rule" : "Set stock to zero before removing this item"}
-                      onClick={(e) => {
-                        if (!confirm("Are you sure you want to remove this menu item?")) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      <Trash2 size={16} className="mr-2" />
-                      Delete
-                    </button>
-                  </form>
-                </div>
-                {!canRemove && (
-                  <p className="text-right text-xs text-stone-500">
-                    Stock must be zero to delete.
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
-        {menuItems.length === 0 && (
-          <div className="rounded-lg border border-dashed border-stone-300 p-8 text-center text-stone-500">
-            No menu items found. Create one to get started.
-          </div>
-        )}
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(item.menuItemId)}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-stone-200 bg-white text-stone-600 shadow-sm transition hover:bg-stone-50 hover:text-stone-900 focus:outline-none focus:ring-2 focus:ring-coffee/20"
+                        title="Edit menu item"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <form action={deleteMenuItemAction} className="inline-block">
+                        <input type="hidden" name="menuItemId" value={item.menuItemId} />
+                        <button
+                          type="submit"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                          disabled={!canRemove}
+                          title={canRemove ? "Delete item" : "Stock must be zero to delete"}
+                          onClick={(e) => {
+                            if (!confirm("Are you sure you want to remove this menu item?")) {
+                              e.preventDefault();
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+            {menuItems.length === 0 && (
+              <tr>
+                <td colSpan={7} className="p-8 text-center text-stone-500">
+                  No menu items found. Create one to get started.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {editingItem && (

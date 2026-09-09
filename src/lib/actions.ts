@@ -87,6 +87,14 @@ const inventorySchema = z.object({
   lastUpdatedByAdminId: z.number().int().positive()
 });
 
+const rawMaterialSchema = z.object({
+  name: z.string().min(1),
+  stockQuantity: z.number().int().min(0),
+  reorderLevel: z.number().int().min(0),
+  unit: z.string().min(1),
+  lastUpdatedByAdminId: z.number().int().positive()
+});
+
 export async function loginAction(formData: FormData) {
   const result = await login(value(formData, "username"), value(formData, "password"));
   if (!result.ok) redirect("/login?error=Invalid+username+or+password");
@@ -426,6 +434,48 @@ export async function saveInventoryAction(formData: FormData) {
   }
   revalidatePath("/admin/inventory");
   redirect("/admin/inventory?success=Inventory+updated+successfully");
+}
+
+export async function saveRawMaterialAction(formData: FormData) {
+  const admin = await requireRole("ADMIN");
+  const materialId = Number(value(formData, "materialId") || 0);
+  const data = {
+    name: value(formData, "name"),
+    stockQuantity: Number(value(formData, "stockQuantity")),
+    reorderLevel: Number(value(formData, "reorderLevel")),
+    unit: value(formData, "unit"),
+    lastUpdatedByAdminId: admin.userId
+  };
+  rawMaterialSchema.parse(data);
+
+  if (materialId) {
+    await prisma.rawMaterial.update({
+      where: { materialId },
+      data: {
+        stockQuantity: { increment: data.stockQuantity },
+        reorderLevel: data.reorderLevel,
+        unit: data.unit,
+        lastUpdatedByAdminId: admin.userId
+      }
+    });
+  } else {
+    await prisma.rawMaterial.create({ data });
+  }
+
+  revalidatePath("/admin/inventory");
+  redirect("/admin/inventory?success=Raw+material+saved+successfully");
+}
+
+export async function deleteRawMaterialAction(formData: FormData) {
+  await requireRole("ADMIN");
+  const materialId = Number(value(formData, "materialId"));
+  
+  await prisma.rawMaterial.delete({
+    where: { materialId }
+  });
+
+  revalidatePath("/admin/inventory");
+  redirect("/admin/inventory?success=Raw+material+deleted+successfully");
 }
 
 export async function createOrderAction(formData: FormData) {
